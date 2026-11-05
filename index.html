@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14142a">
+  <meta name="description" content="免费体验三张塔罗牌，用三个角度整理此刻的问题。无需登录，问题与结果留在你的浏览器中。">
+  <title>此刻的三张牌 · 免费塔罗体验</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar"><span class="brand-mark">✦</span><span>此刻的三张牌</span><span class="top-note">免费 · 本地体验</span></header>
+    <section class="hero">
+      <p class="eyebrow">A MOMENT TO REFLECT</p>
+      <h1>给此刻的困惑，<br><em>换三个角度。</em></h1>
+      <p class="lede">提出一个问题，选出三张牌。把解读当作整理思路的提示，把决定留给自己。</p>
+      <div class="ornament" aria-hidden="true">✧　☼　✧</div>
+    </section>
+
+    <section class="panel" id="setup">
+      <div class="step-tag">01 / 想一个问题</div>
+      <h2>你现在想探索什么？</h2>
+      <p class="muted">选择主题，再写下一个开放式问题。也可以留空，直接抽牌。</p>
+      <div class="themes" role="group" aria-label="选择主题">
+        <button class="theme selected" data-theme="关系" type="button"><span>♡</span> 关系</button>
+        <button class="theme" data-theme="工作" type="button"><span>✦</span> 工作</button>
+        <button class="theme" data-theme="自我成长" type="button"><span>☼</span> 自我成长</button>
+      </div>
+      <label for="question">我的问题 <span class="optional">可选</span></label>
+      <textarea id="question" maxlength="120" rows="3" placeholder="例如：我可以怎样更坦诚地表达自己的需要？"></textarea>
+      <p class="hint">尽量问“我可以怎样……”。请不要填写姓名、电话或其他私人信息。</p>
+      <p id="safety" class="safety" hidden></p>
+      <button class="primary" id="begin" type="button">开始抽牌 <span>→</span></button>
+    </section>
+
+    <section class="panel draw-panel" id="draw" hidden>
+      <div class="step-tag">02 / 选出三张牌</div>
+      <h2>慢慢来，凭直觉选择。</h2>
+      <p class="muted" id="draw-prompt">请选择第一张牌：当前处境</p>
+      <div class="picked" id="picked" aria-live="polite"></div>
+      <div class="deck-row" id="deck-row" aria-label="可选的牌"></div>
+      <p class="hint center">每张牌都来自同一副牌；选定后不会重复出现。</p>
+    </section>
+
+    <section class="panel result-panel" id="result" hidden>
+      <div class="step-tag">03 / 读一读此刻</div>
+      <h2>你的三张牌</h2>
+      <p class="result-question" id="result-question"></p>
+      <div class="result-cards" id="result-cards"></div>
+      <div class="summary-box"><div class="small-title">三张牌的线索</div><p id="summary"></p></div>
+      <div class="reflection"><span>✧ 留给自己的一个问题</span><p id="reflection"></p></div>
+      <div class="result-actions">
+        <button class="primary" id="again" type="button">带着新问题，再抽一次 <span>↗</span></button>
+        <button class="text-button" id="copy" type="button">复制不含原问题的结果摘要</button>
+      </div>
+    </section>
+
+    <section class="about">
+      <span>✦</span>
+      <p>这是免费、无账户的本地体验。问题和结果只保存在当前浏览器中；点击“清除本机记录”即可删除。塔罗解读用于娱乐与自我反思，不替代医疗、法律、财务或其他专业建议。</p>
+      <button id="clear" type="button">清除本机记录</button>
+      <a href="README.md">使用说明与开源来源</a>
+    </section>
+    <footer>此刻的三张牌 <span>·</span> 慢一点，听听自己</footer>
+  </main>
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>
