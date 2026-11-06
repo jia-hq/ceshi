@@ -77,6 +77,7 @@ function renderResult(entry) {
     details.append(label, title, english, meaning); article.append(face, details); $('result-cards').append(article);
   });
   $('summary').textContent = reading.summary; $('reflection').textContent = reading.reflection;
+  $('again').onclick = () => selectSpread(entry.spreadKey);
   $('copy').onclick = async () => {
     const text = `${reading.spreadName}｜${reading.cards.map(c => `${c.position}：${c.zh}${c.reversed ? '逆位' : '正位'}`).join('；')}。${reading.summary}`;
     try { await navigator.clipboard.writeText(text); $('copy').textContent = '已复制摘要 ✓'; }
@@ -142,7 +143,6 @@ $('begin').addEventListener('click', () => {
   $('safety').hidden = true; state.question = question; state.cards = []; state.options = []; saveActive(); renderDraw();
 });
 $('draw-back').addEventListener('click', () => { state.cards = []; state.options = []; saveActive(); show('setup'); });
-$('again').addEventListener('click', () => selectSpread(state.spreadKey));
 $('library-search').addEventListener('input', renderLibrary);
 document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { filter = button.dataset.filter; document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('selected', item === button)); renderLibrary(); }));
 $('dialog-close').addEventListener('click', () => $('card-dialog').close());
