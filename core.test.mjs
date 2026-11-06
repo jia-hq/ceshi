@@ -106,3 +106,20 @@ test('不同牌阵有不同层次的解读与篇幅', () => {
   assert.ok(size(three) < size(five));
   assert.ok(five.sections.some(s => s.body.includes('已有资源') && s.body.includes('隐藏阻力')));
 });
+
+test('牌面知识为每张牌提供具体观察线索', async () => {
+  const { cardDetail } = await import('./knowledge.mjs');
+  const details = deck.map(cardDetail);
+  assert.ok(details.every(item => item.imageCue.length > 12 && item.tension.length > 12 && item.practice.length > 12));
+  assert.equal(new Set(details.map(item => item.imageCue)).size, 78);
+});
+
+test('三张和五张解读包含牌面依据与牌间联系', () => {
+  const cards = deck.slice(0, 5).map((card, i) => ({ ...card, reversed: i === 2, position: spreads.five.positions[i] }));
+  const three = createReading('关系', '我怎样更好沟通？', cards.slice(0, 3).map((card, i) => ({ ...card, position: spreads.three.positions[i] })), 'three');
+  const five = createReading('关系', '我怎样更好沟通？', cards, 'five');
+  assert.ok(three.cards.every(card => card.meaning.includes('画面')));
+  assert.ok(three.sections.some(section => section.body.includes('两张牌')));
+  assert.ok(five.sections.some(section => section.body.includes('呼应') || section.body.includes('张力')));
+  assert.ok(five.sections.map(section => section.body).join('').length > 450);
+});

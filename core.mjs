@@ -1,5 +1,5 @@
 import deckData from './deck.mjs';
-import { understandQuestion } from './knowledge.mjs';
+import { understandQuestion, cardDetail } from './knowledge.mjs';
 
 export const deck = deckData;
 export const spreads = {
@@ -128,8 +128,10 @@ export function createReading(theme, question, cards = drawThree(), spreadKey = 
     const position = spread.positions[i];
     const idea = cardMeaning(card).keywords[0];
     const base = card.reversed ? cardMeaning(card).reversed : cardMeaning(card).upright;
+    const detail = cardDetail(card);
+    const orientation = card.reversed ? `逆位时，这份「${idea}」可能被压住、用得过度，或者还没有找到合适出口。` : `正位时，「${idea}」较容易成为你能看见和使用的力量。`;
     const ending = guidance.unknown ? '如果这与你的问题没有关系，可以把它放下，只保留你认为有用的部分。' : `放回你关于${focus.name}的疑问里，可以先${focus.move}。`;
-    const meaning = `${positionVoices[position]?.(idea) || `这张牌让你留意「${idea}」。`}${base}${ending}`;
+    const meaning = `${positionVoices[position]?.(idea) || `这张牌让你留意「${idea}」。`}牌面画面里，${detail.imageCue}。${base}${orientation}${detail.tension}。${ending}如果愿意，也可以${detail.practice}。`;
     return { ...card, position, meaning, idea };
   });
   const first = annotated[0];
@@ -149,16 +151,16 @@ export function createReading(theme, question, cards = drawThree(), spreadKey = 
   } else if (spreadKey === 'five') {
     const [core, resource, obstacle, perspective, step] = annotated;
     sections = [
-      { title: '问题核心', body: `先看「${core.position}」的${core.zh}：${core.meaning}这张牌更像一面镜子，帮助你确认眼前最需要被看见的部分。${context}` },
-      { title: '资源与阻力', body: `「${resource.position}」的${resource.zh}指出可以动用的${resource.idea}；「${obstacle.position}」的${obstacle.zh}则提醒你留意${obstacle.idea}带来的阻力。把两张牌并排看：你已经拥有什么，又在哪个环节最容易卡住？${context}` },
-      { title: '新的视角', body: `「${perspective.position}」的${perspective.zh}让${perspective.idea}进入画面。它不一定推翻前面的判断，但可能帮助你重新理解资源与阻力的关系。可以想想：如果暂时不急于解决，是否还有另一种解释？` },
-      { title: '行动与整合', body: `最后「${step.position}」的${step.zh}落在${step.idea}。把前四张牌连起来，不必一次处理所有问题。${guidance.action}完成后再回看：这个尝试是否让你更接近自己重视的方向？` },
+      { title: '问题核心', body: `先看「${core.position}」的${core.zh}。它的画面中，${cardDetail(core).imageCue}；这让${core.idea}不只是一个抽象词，而是一个需要你核对现实的线索。${core.reversed ? '逆位提示这部分可能被压抑或用力过度。' : '正位提示这部分可能正变得清晰。'}这张牌更像一面镜子，帮助你确认眼前最需要被看见的部分。${context}` },
+      { title: '资源与阻力', body: `「${resource.position}」的${resource.zh}指出可以动用的${resource.idea}；「${obstacle.position}」的${obstacle.zh}则提醒你留意${obstacle.idea}带来的阻力。这里的张力是：${cardDetail(resource).tension}；同时，${cardDetail(obstacle).tension}。两张牌并排看，你已经拥有什么，又在哪个环节最容易卡住？如果资源牌逆位，不代表资源不存在，也可能只是暂时难以使用。${context}` },
+      { title: '新的视角', body: `「${perspective.position}」的${perspective.zh}让${perspective.idea}进入画面。${cardDetail(perspective).imageCue}。它不一定推翻前面的判断，却可能与「${core.zh}」形成呼应：同一个问题也许既有眼前的困难，也有尚未尝试的解释。可以想想：如果暂时不急于解决，是否还有另一种看法？` },
+      { title: '行动与整合', body: `最后「${step.position}」的${step.zh}落在${step.idea}。它与「${obstacle.zh}」之间的张力提醒你：行动不必一次处理所有阻力，但要知道哪一步会让自己更有余地。${guidance.action}此外，也可以${cardDetail(step).practice}。完成一次尝试后，再回看资源是否被用上、阻力是否仍然相同，以及这个方向是否贴近你重视的事。` },
     ];
   } else {
     const [current, notice, step] = annotated;
     sections = [
-      { title: '处境与提醒', body: `「${current.position}」的${current.zh}呈现${current.idea}；「${notice.position}」的${notice.zh}提醒留意${notice.idea}。两张牌放在一起，或许值得问：我看到的是已经发生的事实，还是对下一步的担心？${context}` },
-      { title: '可以尝试', body: `「${step.position}」的${step.zh}把注意力带到${step.idea}。${guidance.action}` },
+      { title: '处境与提醒', body: `「${current.position}」的${current.zh}呈现${current.idea}，画面上${cardDetail(current).imageCue}；「${notice.position}」的${notice.zh}提醒留意${notice.idea}。两张牌的联系不在于预言结果，而在于它们让你同时看到已有状态与可能忽略的部分。或许值得问：我看到的是已经发生的事实，还是对下一步的担心？${context}` },
+      { title: '可以尝试', body: `「${step.position}」的${step.zh}把注意力带到${step.idea}。与前两张牌相比，这里更适合寻找可验证的小行动。${guidance.action}也可以${cardDetail(step).practice}，然后观察这一步是否真的对你有帮助。` },
     ];
   }
   return { theme: safeTheme, question: String(question || '').trim().slice(0, 120), focus: focus.name, spreadKey, spreadName: spread.name, cards: annotated, summary, reflection, sections, ...guidance };

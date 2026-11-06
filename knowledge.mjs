@@ -1,9 +1,15 @@
 // Each rule is an original product prompt, not a quotation from a source.
+import { imageNote } from './card-notes.mjs';
 export const sources = {
   tarot: { title: 'A. E. Waite, The Pictorial Key to the Tarot', url: 'https://en.wikisource.org/wiki/The_Pictorial_Key_to_the_Tarot' },
   stress: { title: 'OpenStax Psychology 2e, Regulation of Stress', url: 'https://openstax.org/books/psychology-2e/pages/14-4-regulation-of-stress' },
   grounding: { title: 'WHO, Doing What Matters in Times of Stress', url: 'https://www.who.int/publications/i/item/9789240003927' },
 };
+
+export function cardDetail(card) {
+  const [imageCue, tension, practice] = imageNote(card);
+  return { imageCue, tension, practice, source: 'tarot' };
+}
 
 const emotionRules = [
   { name: '焦虑', pattern: /焦虑|担心|害怕|恐慌|紧张|不安|怕.*失败/, support: '听起来你正为这件事感到焦虑。先不急着从牌里找确定答案，可以停一停，留意呼吸和身边能看见的事物，再回到眼前可处理的一小步。' },
