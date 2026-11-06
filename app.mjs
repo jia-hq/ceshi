@@ -1,118 +1,159 @@
-import { drawOptions, createReading, positions } from './core.mjs';
+import { deck, spreads, drawOptions, createReading, cardMeaning } from './core.mjs';
 
 const $ = id => document.getElementById(id);
-const storageKey = 'three-card-tarot-reading-v1';
-const state = { theme: '关系', question: '', cards: [], options: [], count: 0 };
-const symbols = { major: '✧', cups: '♡', wands: '✦', swords: '⚔', pentacles: '◇' };
+const activeKey = 'tarot-active-v2';
+const historyKey = 'tarot-history-v2';
+const oldKey = 'three-card-tarot-reading-v1';
+const state = { spreadKey: 'three', theme: '关系', question: '', cards: [], options: [] };
+const glyphs = { major: '✶', cups: '♡', wands: '✦', swords: '✧', pentacles: '◇' };
 const safetyPattern = /自杀|自残|伤害自己|诊断|疾病|怀孕|买股票|投资建议|法律判决/;
+let filter = 'all';
 
-function show(id) {
-  for (const name of ['setup', 'draw', 'result']) $(name).hidden = name !== id;
-  $(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+function readJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; } }
+function store(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
+function saveActive() { store(activeKey, state); }
+function show(name) {
+  document.querySelectorAll('.view').forEach(view => { view.hidden = view.id !== name; });
+  document.querySelectorAll('[data-nav]').forEach(item => item.classList.toggle('active', item.dataset.nav === name));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-function save() {
-  try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* Private browsing can block storage. */ }
+function selectSpread(key) {
+  state.spreadKey = spreads[key] ? key : 'three'; state.cards = []; state.options = []; state.question = '';
+  $('question').value = ''; $('char-count').textContent = '0 / 120'; $('safety').hidden = true;
+  $('setup-title').textContent = spreads[state.spreadKey].name;
+  $('setup-subtitle').textContent = `${spreads[state.spreadKey].subtitle}。先选择主题，再写下一个想探索的问题。`;
+  saveActive(); show('setup');
 }
-
+function makeFace(card, className = 'tarot-face') {
+  const face = document.createElement('div'); face.className = `${className} ${card.suit || 'major'}`;
+  const top = document.createElement('span'); top.className = 'face-number'; top.textContent = card.arcana === 'major' ? String(card.rank).padStart(2, '0') : String(card.rank).padStart(2, '0');
+  const center = document.createElement('span'); center.className = 'face-glyph'; center.textContent = glyphs[card.suit || 'major'];
+  const bottom = document.createElement('span'); bottom.className = 'face-name'; bottom.textContent = card.zh;
+  face.append(top, center, bottom); return face;
+}
 function renderDraw() {
-  const labels = ['当前处境', '值得留意', '可以尝试'];
-  $('draw-prompt').textContent = `请选择第${['一', '二', '三'][state.count]}张牌：${labels[state.count]}`;
-  $('picked').replaceChildren();
-  for (const card of state.cards.slice(0, state.count)) {
-    const item = document.createElement('span');
-    item.textContent = `${card.position} ✓`;
-    $('picked').append(item);
-  }
+  const spread = spreads[state.spreadKey];
+  const index = state.cards.length;
+  $('draw-prompt').textContent = `第 ${index + 1} / ${spread.positions.length} 张 · ${spread.positions[index]}`;
+  $('draw-progress').replaceChildren();
+  spread.positions.forEach((position, i) => {
+    const item = document.createElement('div'); item.className = `progress-item ${i < index ? 'complete' : ''} ${i === index ? 'current' : ''}`;
+    const mark = document.createElement('span'); mark.textContent = i < index ? '✓' : String(i + 1);
+    const label = document.createElement('small'); label.textContent = position;
+    item.append(mark, label); $('draw-progress').append(item);
+  });
+  if (state.options.length !== 5) { state.options = drawOptions(state.cards, 5); saveActive(); }
   $('deck-row').replaceChildren();
-  if (state.options.length !== 5) { state.options = drawOptions(state.cards); save(); }
-  for (let i = 0; i < 5; i++) {
-    const button = document.createElement('button');
-    button.className = 'card-back';
-    button.type = 'button';
-    button.setAttribute('aria-label', `选择第 ${i + 1} 张牌背`);
-    button.textContent = '✧';
+  state.options.forEach((card, i) => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'card-back'; button.setAttribute('aria-label', `选择第 ${i + 1} 张牌背`);
+    button.innerHTML = '<span>✶</span><small>THE TAROT</small>';
     button.addEventListener('click', () => {
-      state.cards.push({ ...state.options[i], position: positions[state.count] });
-      state.count++;
-      state.options = [];
-      save();
-      if (state.count === 3) renderResult(); else renderDraw();
+      state.cards.push({ ...card, position: spread.positions[index] }); state.options = []; saveActive();
+      if (state.cards.length === spread.positions.length) finishReading(); else renderDraw();
     });
     $('deck-row').append(button);
-  }
+  });
   show('draw');
 }
-
-function renderResult() {
-  const reading = createReading(state.theme, state.question, state.cards);
-  $('result-question').textContent = state.question ? `你想探索：${state.question}` : `主题：${state.theme}`;
+function saveReading() {
+  const history = readJson(historyKey, []);
+  const entry = { id: crypto.randomUUID?.() || String(Date.now()), date: new Date().toISOString(), spreadKey: state.spreadKey, theme: state.theme, question: state.question, cards: state.cards };
+  history.unshift(entry); store(historyKey, history.slice(0, 30)); return entry;
+}
+function finishReading() { const entry = saveReading(); renderResult(entry); }
+function renderResult(entry) {
+  const reading = createReading(entry.theme, entry.question, entry.cards, entry.spreadKey);
+  $('result-title').textContent = reading.spreadName;
+  $('result-question').textContent = reading.question ? `你想探索：${reading.question}` : `主题：${reading.theme}`;
   $('result-cards').replaceChildren();
-  for (const card of reading.cards) {
-    const box = document.createElement('article');
-    box.className = 'reading-card';
-    const face = document.createElement('div'); face.className = 'card-face'; face.textContent = symbols[card.suit || 'major'];
-    const pos = document.createElement('div'); pos.className = 'card-position'; pos.textContent = card.position;
-    const title = document.createElement('h3'); title.textContent = card.zh;
-    const ori = document.createElement('div'); ori.className = 'orientation'; ori.textContent = card.reversed ? '逆位' : '正位';
+  reading.cards.forEach((card, i) => {
+    const article = document.createElement('article'); article.className = 'reading-card';
+    const face = makeFace(card);
+    const details = document.createElement('div'); details.className = 'reading-details';
+    const label = document.createElement('span'); label.className = 'eyebrow'; label.textContent = `${String(i + 1).padStart(2, '0')} / ${card.position}`;
+    const title = document.createElement('h3'); title.textContent = `${card.zh} · ${card.reversed ? '逆位' : '正位'}`;
+    const english = document.createElement('small'); english.textContent = card.name;
     const meaning = document.createElement('p'); meaning.textContent = card.meaning;
-    box.append(face, pos, title, ori, meaning);
-    $('result-cards').append(box);
-  }
-  $('summary').textContent = reading.summary;
-  $('reflection').textContent = reading.reflection;
+    details.append(label, title, english, meaning); article.append(face, details); $('result-cards').append(article);
+  });
+  $('summary').textContent = reading.summary; $('reflection').textContent = reading.reflection;
+  $('copy').onclick = async () => {
+    const text = `${reading.spreadName}｜${reading.cards.map(c => `${c.position}：${c.zh}${c.reversed ? '逆位' : '正位'}`).join('；')}。${reading.summary}`;
+    try { await navigator.clipboard.writeText(text); $('copy').textContent = '已复制摘要 ✓'; }
+    catch { $('copy').textContent = '复制失败，请手动选择文字'; }
+  };
   show('result');
 }
+function renderLibrary() {
+  const query = $('library-search').value.trim().toLowerCase();
+  const cards = deck.filter(card => (filter === 'all' || (filter === 'major' ? card.arcana === 'major' : card.suit === filter)) && (!query || `${card.zh} ${card.name} ${cardMeaning(card).keywords.join(' ')}`.toLowerCase().includes(query)));
+  $('library-count').textContent = `找到 ${cards.length} 张牌`;
+  $('library-grid').replaceChildren();
+  cards.forEach(card => {
+    const button = document.createElement('button'); button.className = 'library-card'; button.type = 'button';
+    const face = makeFace(card, 'mini-face');
+    const name = document.createElement('strong'); name.textContent = card.zh;
+    const meta = document.createElement('small'); meta.textContent = cardMeaning(card).family;
+    button.append(face, name, meta); button.addEventListener('click', () => openCard(card)); $('library-grid').append(button);
+  });
+}
+function openCard(card) {
+  const meaning = cardMeaning(card); const box = $('dialog-content'); box.replaceChildren();
+  const layout = document.createElement('div'); layout.className = 'dialog-layout';
+  const face = makeFace(card);
+  const text = document.createElement('div');
+  const family = document.createElement('span'); family.className = 'eyebrow'; family.textContent = meaning.family;
+  const title = document.createElement('h2'); title.textContent = card.zh;
+  const english = document.createElement('small'); english.textContent = card.name;
+  const intro = document.createElement('p'); intro.className = 'dialog-intro'; intro.textContent = meaning.intro;
+  const tags = document.createElement('div'); tags.className = 'keyword-row'; meaning.keywords.forEach(word => { const tag = document.createElement('span'); tag.textContent = word; tags.append(tag); });
+  text.append(family, title, english, intro, tags);
+  for (const [label, value] of [['正位', meaning.upright], ['逆位', meaning.reversed], ['给自己的问题', meaning.question]]) {
+    const section = document.createElement('section'); const heading = document.createElement('h3'); heading.textContent = label; const p = document.createElement('p'); p.textContent = value; section.append(heading, p); text.append(section);
+  }
+  layout.append(face, text); box.append(layout); $('card-dialog').showModal();
+}
+function renderHistory() {
+  const history = readJson(historyKey, []); $('history-list').replaceChildren();
+  $('clear-all').hidden = history.length === 0;
+  if (!history.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.innerHTML = '<span>✶</span><h3>旅程还没有开始</h3><p>完成一次抽牌后，记录会出现在这里。</p>'; const start = document.createElement('button'); start.className = 'button-gold'; start.textContent = '去探索 ↗'; start.addEventListener('click', () => show('home')); empty.append(start); $('history-list').append(empty); return; }
+  history.forEach(entry => {
+    const row = document.createElement('article'); row.className = 'history-item';
+    const info = document.createElement('div'); const date = document.createElement('small'); date.textContent = new Date(entry.date).toLocaleString('zh-CN');
+    const title = document.createElement('h3'); title.textContent = spreads[entry.spreadKey]?.name || '塔罗解读';
+    const question = document.createElement('p'); question.textContent = entry.question || `主题：${entry.theme}`;
+    const cards = document.createElement('span'); cards.className = 'history-cards'; cards.textContent = entry.cards.map(c => c.zh).join(' · ');
+    info.append(date, title, question, cards);
+    const actions = document.createElement('div'); actions.className = 'history-actions';
+    const view = document.createElement('button'); view.textContent = '查看'; view.addEventListener('click', () => renderResult(entry));
+    const remove = document.createElement('button'); remove.textContent = '删除'; remove.addEventListener('click', () => { store(historyKey, readJson(historyKey, []).filter(item => item.id !== entry.id)); renderHistory(); });
+    actions.append(view, remove); row.append(info, actions); $('history-list').append(row);
+  });
+}
 
-document.querySelectorAll('.theme').forEach(button => button.addEventListener('click', () => {
-  state.theme = button.dataset.theme;
-  document.querySelectorAll('.theme').forEach(item => item.classList.toggle('selected', item === button));
-}));
-
+document.querySelectorAll('[data-nav]').forEach(button => button.addEventListener('click', event => { event.preventDefault(); const page = button.dataset.nav; if (page === 'library') renderLibrary(); if (page === 'history') renderHistory(); show(page); }));
+document.querySelectorAll('[data-spread]').forEach(button => button.addEventListener('click', () => selectSpread(button.dataset.spread)));
+$('hero-start').addEventListener('click', () => $('spreads').scrollIntoView({ behavior: 'smooth' }));
+document.querySelectorAll('[data-theme]').forEach(button => button.addEventListener('click', () => { state.theme = button.dataset.theme; document.querySelectorAll('[data-theme]').forEach(item => item.classList.toggle('selected', item === button)); saveActive(); }));
+$('question').addEventListener('input', () => { $('char-count').textContent = `${$('question').value.length} / 120`; });
 $('begin').addEventListener('click', () => {
   const question = $('question').value.trim();
-  if (safetyPattern.test(question)) {
-    $('safety').hidden = false;
-    $('safety').textContent = '这个问题可能需要现实中的专业支持。这里不适合做相关判断；请换一个关于自身感受或下一步支持的问题。若你正处于危险中，请及时联系身边可信任的人或当地紧急服务。';
-    return;
-  }
-  $('safety').hidden = true;
-  state.question = question;
-  state.cards = [];
-  state.options = [];
-  state.count = 0;
-  save();
-  renderDraw();
+  if (safetyPattern.test(question)) { $('safety').hidden = false; $('safety').textContent = '这个问题需要现实中的专业支持；这里不适合做相关判断。请换一个关于自身感受或支持方式的问题。如正处于危险中，请及时联系可信任的人或当地紧急服务。'; return; }
+  $('safety').hidden = true; state.question = question; state.cards = []; state.options = []; saveActive(); renderDraw();
 });
+$('draw-back').addEventListener('click', () => { state.cards = []; state.options = []; saveActive(); show('setup'); });
+$('again').addEventListener('click', () => selectSpread(state.spreadKey));
+$('library-search').addEventListener('input', renderLibrary);
+document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { filter = button.dataset.filter; document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('selected', item === button)); renderLibrary(); }));
+$('dialog-close').addEventListener('click', () => $('card-dialog').close());
+$('card-dialog').addEventListener('click', event => { if (event.target === $('card-dialog')) $('card-dialog').close(); });
+$('clear-all').addEventListener('click', () => { if (!confirm('确定删除这台设备上的全部塔罗记录吗？')) return; try { localStorage.removeItem(historyKey); localStorage.removeItem(activeKey); localStorage.removeItem(oldKey); } catch {} renderHistory(); });
 
-$('again').addEventListener('click', () => {
-  state.cards = []; state.options = []; state.count = 0; state.question = '';
-  $('question').value = '';
-  save(); show('setup');
-});
-
-$('clear').addEventListener('click', () => {
-  try { localStorage.removeItem(storageKey); } catch {}
-  state.theme = '关系'; state.question = ''; state.cards = []; state.options = []; state.count = 0;
-  $('question').value = '';
-  document.querySelectorAll('.theme').forEach(item => item.classList.toggle('selected', item.dataset.theme === '关系'));
-  $('clear').textContent = '已清除本机记录';
-  show('setup');
-});
-
-$('copy').addEventListener('click', async () => {
-  const reading = createReading(state.theme, '', state.cards);
-  const text = `此刻的三张牌｜${reading.cards.map(c => `${c.position}：${c.zh}${c.reversed ? '逆位' : '正位'}`).join('；')}。${reading.summary}`;
-  try { await navigator.clipboard.writeText(text); $('copy').textContent = '已复制摘要'; }
-  catch { $('copy').textContent = '复制失败，请手动选择文字'; }
-});
-
-try {
-  const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-  if (saved && Array.isArray(saved.cards) && saved.cards.length === saved.count && Number.isInteger(saved.count) && saved.count >= 0 && saved.count <= 3) {
-    Object.assign(state, saved);
-    $('question').value = state.question;
-    document.querySelectorAll('.theme').forEach(item => item.classList.toggle('selected', item.dataset.theme === state.theme));
-    if (state.count === 3) renderResult(); else renderDraw();
-  }
-} catch { /* A damaged local record should not block the app. */ }
+const saved = readJson(activeKey, null);
+if (saved && spreads[saved.spreadKey] && Array.isArray(saved.cards) && saved.cards.length < spreads[saved.spreadKey].positions.length) {
+  Object.assign(state, saved);
+  $('question').value = state.question || '';
+  $('char-count').textContent = `${$('question').value.length} / 120`;
+  document.querySelectorAll('[data-theme]').forEach(item => item.classList.toggle('selected', item.dataset.theme === state.theme));
+  if (state.cards.length || state.options?.length) renderDraw();
+}

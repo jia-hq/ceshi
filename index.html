@@ -3,67 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#14142a">
-  <meta name="description" content="免费体验三张塔罗牌，用三个角度整理此刻的问题。无需登录，问题与结果留在你的浏览器中。">
-  <title>此刻的三张牌 · 免费塔罗体验</title>
+  <meta name="theme-color" content="#171426">
+  <meta name="description" content="免费塔罗体验：一张、三张、五张牌阵，78 张牌义百科。无需登录，记录只留在自己的浏览器。">
+  <title>星间塔罗 · 在牌里，看见另一种可能</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar"><span class="brand-mark">✦</span><span>此刻的三张牌</span><span class="top-note">免费 · 本地体验</span></header>
-    <section class="hero">
-      <p class="eyebrow">A MOMENT TO REFLECT</p>
-      <h1>给此刻的困惑，<br><em>换三个角度。</em></h1>
-      <p class="lede">提出一个问题，选出三张牌。把解读当作整理思路的提示，把决定留给自己。</p>
-      <div class="ornament" aria-hidden="true">✧　☼　✧</div>
-    </section>
+  <div class="stars" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="#home" data-nav="home"><span class="logo-glyph">✶</span><span>星间塔罗<small>BETWEEN THE STARS</small></span></a>
+      <nav aria-label="主导航"><button data-nav="home" class="active">探索</button><button data-nav="library">牌义百科</button><button data-nav="history">我的记录</button></nav>
+      <span class="free-badge">✧ 永久免费</span>
+    </div>
+  </header>
 
-    <section class="panel" id="setup">
-      <div class="step-tag">01 / 想一个问题</div>
-      <h2>你现在想探索什么？</h2>
-      <p class="muted">选择主题，再写下一个开放式问题。也可以留空，直接抽牌。</p>
-      <div class="themes" role="group" aria-label="选择主题">
-        <button class="theme selected" data-theme="关系" type="button"><span>♡</span> 关系</button>
-        <button class="theme" data-theme="工作" type="button"><span>✦</span> 工作</button>
-        <button class="theme" data-theme="自我成长" type="button"><span>☼</span> 自我成长</button>
+  <main>
+    <section class="view home-view" id="home">
+      <div class="hero-content">
+        <p class="eyebrow">A SPACE FOR REFLECTION <span>✦</span> 一次温柔的自我对话</p>
+        <h1>让每一次犹豫，<br>都有<span>被看见的机会。</span></h1>
+        <p class="hero-copy">选择一种牌阵，写下心中的问题。牌不会替你决定未来，却能帮助你听见自己真正的想法。</p>
+        <button class="button-gold" id="hero-start">开始一次探索 <span>↗</span></button>
+        <div class="hero-facts"><span>✧ 三种经典牌阵</span><span>✧ 78 张塔罗牌</span><span>✧ 无需登录</span></div>
       </div>
-      <label for="question">我的问题 <span class="optional">可选</span></label>
-      <textarea id="question" maxlength="120" rows="3" placeholder="例如：我可以怎样更坦诚地表达自己的需要？"></textarea>
-      <p class="hint">尽量问“我可以怎样……”。请不要填写姓名、电话或其他私人信息。</p>
-      <p id="safety" class="safety" hidden></p>
-      <button class="primary" id="begin" type="button">开始抽牌 <span>→</span></button>
-    </section>
-
-    <section class="panel draw-panel" id="draw" hidden>
-      <div class="step-tag">02 / 选出三张牌</div>
-      <h2>慢慢来，凭直觉选择。</h2>
-      <p class="muted" id="draw-prompt">请选择第一张牌：当前处境</p>
-      <div class="picked" id="picked" aria-live="polite"></div>
-      <div class="deck-row" id="deck-row" aria-label="可选的牌"></div>
-      <p class="hint center">每张牌都来自同一副牌；选定后不会重复出现。</p>
-    </section>
-
-    <section class="panel result-panel" id="result" hidden>
-      <div class="step-tag">03 / 读一读此刻</div>
-      <h2>你的三张牌</h2>
-      <p class="result-question" id="result-question"></p>
-      <div class="result-cards" id="result-cards"></div>
-      <div class="summary-box"><div class="small-title">三张牌的线索</div><p id="summary"></p></div>
-      <div class="reflection"><span>✧ 留给自己的一个问题</span><p id="reflection"></p></div>
-      <div class="result-actions">
-        <button class="primary" id="again" type="button">带着新问题，再抽一次 <span>↗</span></button>
-        <button class="text-button" id="copy" type="button">复制不含原问题的结果摘要</button>
+      <div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="art-card back left">✶</div><div class="art-card back right">✦</div><div class="art-card center-card"><span>XVII</span><strong>✧</strong><small>THE STAR</small></div><div class="art-caption">FOLLOW YOUR INNER LIGHT</div></div>
+      <div class="section-heading" id="spreads"><span>01 / 选择你的牌阵</span><h2>从此刻出发</h2><p>你想用几个角度，看看眼前的事？</p></div>
+      <div class="spread-grid">
+        <button class="spread-card" data-spread="one"><span class="spread-index">01 · QUICK INSIGHT</span><span class="spread-icon">✦</span><strong>一张牌 · 今日启示</strong><span class="spread-desc">用一个简洁的提示，开启今天的自我观察。</span><span class="spread-meta">约 1 分钟 <b>开始探索 ↗</b></span></button>
+        <button class="spread-card featured" data-spread="three"><span class="spread-index">02 · MOST LOVED</span><span class="spread-icon">✧ ✦ ✧</span><strong>三张牌 · 问题探索</strong><span class="spread-desc">从当前处境、值得留意，到可以尝试的行动。</span><span class="spread-meta">约 3 分钟 <b>开始探索 ↗</b></span></button>
+        <button class="spread-card" data-spread="five"><span class="spread-index">03 · DEEP DIVE</span><span class="spread-icon">✧ ✦ ✧ ✦ ✧</span><strong>五张牌 · 深入梳理</strong><span class="spread-desc">把复杂的问题拆开，给每一个面向一些空间。</span><span class="spread-meta">约 5 分钟 <b>开始探索 ↗</b></span></button>
       </div>
+      <div class="home-note"><span>✦</span><p>这里没有命定的答案，只有值得倾听的线索。所有解读免费提供，问题与记录仅保存在你的设备上。</p></div>
     </section>
 
-    <section class="about">
-      <span>✦</span>
-      <p>这是免费、无账户的本地体验。问题和结果只保存在当前浏览器中；点击“清除本机记录”即可删除。塔罗解读用于娱乐与自我反思，不替代医疗、法律、财务或其他专业建议。</p>
-      <button id="clear" type="button">清除本机记录</button>
-      <a href="README.md">使用说明与开源来源</a>
+    <section class="view flow-view" id="setup" hidden>
+      <button class="back-link" data-nav="home">← 返回牌阵</button>
+      <div class="flow-top"><span class="eyebrow">BEFORE THE READING</span><span class="step-indicator">01 / 03</span></div>
+      <h2 id="setup-title">写下你想探索的事</h2><p class="flow-intro" id="setup-subtitle"></p>
+      <div class="flow-layout"><div class="flow-main"><label class="field-label">选择主题</label><div class="topic-row" role="group" aria-label="选择主题"><button class="topic selected" data-theme="关系">♡ 关系</button><button class="topic" data-theme="工作">✦ 工作</button><button class="topic" data-theme="自我成长">☼ 自我成长</button></div><label class="field-label" for="question">你心中的问题 <small>可留空</small></label><textarea id="question" maxlength="120" rows="4" placeholder="例如：我可以怎样更清楚地表达自己的需要？"></textarea><div class="question-helper"><span>尽量问「我可以怎样……」，避免填写姓名、电话等私人资料。</span><span id="char-count">0 / 120</span></div><p class="safety" id="safety" hidden></p><button class="button-gold wide" id="begin">准备好，开始洗牌 <span>↗</span></button></div><aside class="flow-aside"><span>✧</span><h3>一份给自己的空间</h3><p>先把注意力放回自己的感受。好问题无需预测某个人的决定，只需帮助你看清眼前的选择。</p><div class="aside-line"></div><small>牌阵与问题都可以在开始前调整。</small></aside></div>
     </section>
-    <footer>此刻的三张牌 <span>·</span> 慢一点，听听自己</footer>
+
+    <section class="view flow-view draw-view" id="draw" hidden><button class="back-link" id="draw-back">← 重新选择</button><div class="flow-top"><span class="eyebrow">TRUST YOUR INSTINCT</span><span class="step-indicator">02 / 03</span></div><h2>让直觉替你选一张。</h2><p class="flow-intro" id="draw-prompt"></p><div class="draw-progress" id="draw-progress"></div><div class="deck-row" id="deck-row" aria-label="可选的牌"></div><p class="draw-hint">轻触一张牌。每张牌只会出现一次，刷新页面也能继续。</p></section>
+
+    <section class="view result-view" id="result" hidden><button class="back-link" data-nav="home">← 返回探索</button><div class="result-head"><span class="eyebrow">YOUR READING</span><span class="step-indicator">03 / 03</span><h2 id="result-title">你此刻的牌</h2><p id="result-question"></p></div><div class="reading-cards" id="result-cards"></div><div class="interpretation"><div class="interpretation-main"><span class="eyebrow">THE BIG PICTURE</span><h3>把线索连起来</h3><p id="summary"></p></div><div class="reflection"><span>✧ 留给自己的一个问题</span><p id="reflection"></p></div></div><div class="result-actions"><button class="button-gold" id="again">开启新的探索 ↗</button><button class="button-outline" id="copy">复制不含原问题的摘要</button></div></section>
+
+    <section class="view library-view" id="library" hidden><div class="section-heading left"><span>02 / THE 78 CARDS</span><h2>认识每一张牌</h2><p>从关键词开始，慢慢读懂这套象征语言。</p></div><div class="library-tools"><input id="library-search" type="search" placeholder="搜索牌名或关键词" aria-label="搜索牌名或关键词"><div class="filter-row" id="library-filters"><button class="selected" data-filter="all">全部 78 张</button><button data-filter="major">大阿卡那</button><button data-filter="cups">圣杯</button><button data-filter="wands">权杖</button><button data-filter="swords">宝剑</button><button data-filter="pentacles">星币</button></div></div><p class="library-count" id="library-count"></p><div class="library-grid" id="library-grid"></div></section>
+
+    <section class="view history-view" id="history" hidden><div class="section-heading left"><span>03 / YOUR JOURNEY</span><h2>我的记录</h2><p>只保存在这台设备的浏览器里，你可以随时删除。</p></div><div class="history-list" id="history-list"></div><button class="button-outline clear-all" id="clear-all">清空本机记录</button></section>
   </main>
+
+  <dialog id="card-dialog"><button class="dialog-close" id="dialog-close" aria-label="关闭">×</button><div id="dialog-content"></div></dialog>
+  <footer><div class="footer-inner"><div><strong>✶ 星间塔罗</strong><p>在牌里，看见另一种可能。</p></div><p>免费 · 无账户 · 本机保存<br>塔罗用于娱乐与自我反思，不替代专业建议。</p><a href="README.md">项目说明与开源来源 ↗</a></div></footer>
   <script type="module" src="app.mjs"></script>
 </body>
 </html>

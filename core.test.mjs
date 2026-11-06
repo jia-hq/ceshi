@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { deck, drawThree, drawOptions, explainCard, createReading } from './core.mjs';
+import { deck, spreads, drawThree, drawOptions, explainCard, createReading, cardMeaning } from './core.mjs';
 
 test('牌组恰好有 78 张不重复的牌', () => {
   assert.equal(deck.length, 78);
@@ -35,4 +35,20 @@ test('解读可区分正逆位和主题，并产生完整总结', () => {
   assert.equal(result.cards.length, 3);
   assert.ok(result.summary.length > 30);
   assert.ok(result.reflection.length > 5);
+});
+
+test('提供一、三、五张不同牌阵', () => {
+  assert.deepEqual(Object.values(spreads).map(s => s.positions.length), [1, 3, 5]);
+  for (const [key, spread] of Object.entries(spreads)) {
+    const cards = drawOptions([], spread.positions.length).map((card, i) => ({ ...card, position: spread.positions[i] }));
+    const reading = createReading('自我成长', '', cards, key);
+    assert.equal(reading.cards.length, spread.positions.length);
+    assert.ok(reading.summary.length > 20);
+  }
+});
+
+test('78 张牌都有可区分的百科内容', () => {
+  const entries = deck.map(cardMeaning);
+  assert.ok(entries.every(entry => entry.keywords.length >= 2 && entry.upright.length > 15 && entry.reversed.length > 15 && entry.question.length > 5));
+  assert.equal(new Set(entries.map(entry => entry.upright)).size, 78);
 });
