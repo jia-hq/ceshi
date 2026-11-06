@@ -91,3 +91,18 @@ test('不能识别的具体问题会明确表示理解有限', () => {
   assert.ok(reading.summary.includes('不能可靠地把这个具体问题映射'));
   assert.ok(!reading.action.includes('记录一个已经发生的细小变化'));
 });
+
+test('不同牌阵有不同层次的解读与篇幅', () => {
+  const question = '我该怎样和伴侣沟通？';
+  const make = key => createReading('关系', question, deck.slice(0, spreads[key].positions.length).map((card, index) => ({ ...card, reversed: false, position: spreads[key].positions[index] })), key);
+  const one = make('one');
+  const three = make('three');
+  const five = make('five');
+  assert.deepEqual(one.sections.map(s => s.title), ['今日线索']);
+  assert.deepEqual(three.sections.map(s => s.title), ['处境与提醒', '可以尝试']);
+  assert.deepEqual(five.sections.map(s => s.title), ['问题核心', '资源与阻力', '新的视角', '行动与整合']);
+  const size = reading => reading.sections.map(s => s.body).join('').length;
+  assert.ok(size(one) < size(three));
+  assert.ok(size(three) < size(five));
+  assert.ok(five.sections.some(s => s.body.includes('已有资源') && s.body.includes('隐藏阻力')));
+});

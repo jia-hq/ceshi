@@ -8,6 +8,13 @@ const state = { spreadKey: 'three', theme: '关系', question: '', cards: [], op
 const glyphs = { major: '✶', cups: '♡', wands: '✦', swords: '✧', pentacles: '◇' };
 const safetyPattern = /自杀|自残|伤害自己|诊断|疾病|怀孕|买股票|投资建议|法律判决/;
 let filter = 'all';
+let drawEpoch = 0;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const motion = {
+  one: { title: '让一张牌慢慢浮现。', hint: '选择一张牌，给今天一个观察角度。' },
+  three: { title: '从三张牌里，找一条线索。', hint: '每选一张，牌阵会向两侧展开。' },
+  five: { title: '把五个视角逐一放好。', hint: '让牌阵从中心向外延伸，慢慢看清全貌。' },
+};
 
 function readJson(key, fallback) { try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; } }
 function store(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
@@ -18,6 +25,7 @@ function show(name) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 function selectSpread(key) {
+  drawEpoch++;
   state.spreadKey = spreads[key] ? key : 'three'; state.cards = []; state.options = []; state.question = '';
   $('question').value = ''; $('char-count').textContent = '0 / 120'; $('safety').hidden = true;
   $('setup-title').textContent = spreads[state.spreadKey].name;
@@ -33,8 +41,12 @@ function makeFace(card, className = 'tarot-face') {
   face.append(image, fallback); return face;
 }
 function renderDraw() {
+  const epoch = ++drawEpoch;
   const spread = spreads[state.spreadKey];
   const index = state.cards.length;
+  $('draw').dataset.mode = state.spreadKey;
+  $('draw-title').textContent = motion[state.spreadKey].title;
+  $('draw-hint').textContent = motion[state.spreadKey].hint;
   $('draw-prompt').textContent = `第 ${index + 1} / ${spread.positions.length} 张 · ${spread.positions[index]}`;
   $('draw-progress').replaceChildren();
   spread.positions.forEach((position, i) => {
@@ -44,13 +56,22 @@ function renderDraw() {
     item.append(mark, label); $('draw-progress').append(item);
   });
   if (state.options.length !== 5) { state.options = drawOptions(state.cards, 5); saveActive(); }
+  $('deck-row').classList.remove('revealing');
   $('deck-row').replaceChildren();
   state.options.forEach((card, i) => {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'card-back'; button.setAttribute('aria-label', `选择第 ${i + 1} 张牌背`);
     button.innerHTML = '<span>✶</span><small>THE TAROT</small>';
     button.addEventListener('click', () => {
-      state.cards.push({ ...card, position: spread.positions[index] }); state.options = []; saveActive();
-      if (state.cards.length === spread.positions.length) finishReading(); else renderDraw();
+      if ($('deck-row').classList.contains('revealing')) return;
+      $('deck-row').classList.add('revealing');
+      $('deck-row').querySelectorAll('button').forEach(item => { item.disabled = true; });
+      button.classList.add('chosen');
+      const advance = () => {
+        if (epoch !== drawEpoch) return;
+        state.cards.push({ ...card, position: spread.positions[index] }); state.options = []; saveActive();
+        if (state.cards.length === spread.positions.length) finishReading(); else renderDraw();
+      };
+      if (reducedMotion.matches) advance(); else window.setTimeout(advance, state.spreadKey === 'one' ? 600 : state.spreadKey === 'three' ? 500 : 420);
     });
     $('deck-row').append(button);
   });
@@ -64,6 +85,7 @@ function saveReading() {
 function finishReading() { const entry = saveReading(); renderResult(entry); }
 function renderResult(entry) {
   const reading = createReading(entry.theme, entry.question, entry.cards, entry.spreadKey);
+  $('result').dataset.mode = entry.spreadKey;
   $('result-title').textContent = reading.spreadName;
   $('result-question').textContent = reading.question ? `你想探索：${reading.question}｜解读焦点：${reading.focus}` : `主题：${reading.theme}｜解读焦点：${reading.focus}`;
   $('result-cards').replaceChildren();
@@ -78,6 +100,13 @@ function renderResult(entry) {
     details.append(label, title, english, meaning); article.append(face, details); $('result-cards').append(article);
   });
   $('summary').textContent = reading.summary; $('reflection').textContent = reading.reflection;
+  $('reading-sections').replaceChildren();
+  reading.sections.forEach(section => {
+    const block = document.createElement('section');
+    const title = document.createElement('h4'); title.textContent = section.title;
+    const body = document.createElement('p'); body.textContent = section.body;
+    block.append(title, body); $('reading-sections').append(block);
+  });
   $('reading-support').textContent = reading.support;
   $('reading-limitations').textContent = reading.limitations;
   $('reading-limitations').hidden = !reading.limitations;
@@ -147,7 +176,7 @@ $('begin').addEventListener('click', () => {
   if (safetyPattern.test(question)) { $('safety').hidden = false; $('safety').textContent = '这个问题需要现实中的专业支持；这里不适合做相关判断。请换一个关于自身感受或支持方式的问题。如正处于危险中，请及时联系可信任的人或当地紧急服务。'; return; }
   $('safety').hidden = true; state.question = question; state.cards = []; state.options = []; saveActive(); renderDraw();
 });
-$('draw-back').addEventListener('click', () => { state.cards = []; state.options = []; saveActive(); show('setup'); });
+$('draw-back').addEventListener('click', () => { drawEpoch++; state.cards = []; state.options = []; saveActive(); show('setup'); });
 $('library-search').addEventListener('input', renderLibrary);
 document.querySelectorAll('[data-filter]').forEach(button => button.addEventListener('click', () => { filter = button.dataset.filter; document.querySelectorAll('[data-filter]').forEach(item => item.classList.toggle('selected', item === button)); renderLibrary(); }));
 $('dialog-close').addEventListener('click', () => $('card-dialog').close());
