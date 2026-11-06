@@ -16,4 +16,6 @@
 
 ## 开源来源
 
-78 张牌的英文名称和分类基础数据来自 [metabismuth/tarot-json](https://github.com/metabismuth/tarot-json)，MIT 许可证见 `THIRD_PARTY_LICENSE.txt`。本站没有使用该项目的扫描牌图。中文牌名、牌义、抽牌逻辑和界面由本项目编写。视觉上参考了成熟塔罗网站对牌阵、牌义和记录的组织方式，没有复制其图片或文案。
+78 张牌的英文名称、分类基础数据及 Rider–Waite–Smith 牌面扫描图来自 [metabismuth/tarot-json](https://github.com/metabismuth/tarot-json)，仓库的 MIT 许可证见 `THIRD_PARTY_LICENSE.txt`。原仓库说明扫描图来自 data.totl.net，并提醒牌图在不同地区的版权状态可能不同；公开推广前应按面向地区再次核实图像权利。本站保留来源说明，不把扫描图声明为本站原创。中文牌名、牌义、抽牌逻辑和界面由本项目编写。
+
+解读采用本地规则：结合牌义、牌位、正逆位、主题，以及问题中的常见焦点（如沟通、边界、选择、工作）。问题文本不会发送给外部模型。这种方式能让解读贴近一部分具体问题，但不能理解所有自然语言；不匹配的提问会退回主题解读。

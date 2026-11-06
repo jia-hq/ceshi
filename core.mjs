@@ -46,6 +46,20 @@ const ranks = [
   ['成熟照料','理解自己也理解他人的需要'],['稳健承担','用清晰边界支撑长远目标'],
 ];
 const themeLead = { 关系: '在关系中', 工作: '在工作或学习中', 自我成长: '在自我成长中' };
+const focusRules = [
+  { name: '沟通', pattern: /沟通|交流|表达|说话|聊天|争吵|吵架/, lens: '先分清自己想表达的需要，与希望对方立刻给出的回应', move: '把一句指责改写成一句关于自己感受的陈述' },
+  { name: '边界', pattern: /边界|拒绝|底线|距离|控制|尊重/, lens: '看一看哪些责任属于自己，哪些其实需要交还给对方', move: '写下一个可以温和而清楚说出的界限' },
+  { name: '选择', pattern: /选择|决定|要不要|是否|犹豫|取舍/, lens: '把每个选项的真实代价和自己看重的价值放在一起', move: '列出一个可逆的小尝试，而不是要求自己立刻定终局' },
+  { name: '关系', pattern: /伴侣|恋人|喜欢|感情|朋友|复合|分手|他|她/, lens: '把注意力从猜测他人的想法，拉回自己实际感受到的互动', move: '观察一次具体互动中双方各自表达了什么' },
+  { name: '工作', pattern: /工作|同事|领导|职业|岗位|升职|跳槽|求职|项目/, lens: '区分可控制的任务、需要协商的资源和暂时未知的结果', move: '选一个本周能完成的具体行动' },
+  { name: '成长', pattern: /成长|改变|习惯|自信|焦虑|迷茫|情绪/, lens: '注意自己的节奏，别用一次表现给自己下总评', move: '记录一个已经发生的细小变化' },
+];
+
+export function questionFocus(question, theme) {
+  const clean = String(question || '').trim().slice(0, 120);
+  return focusRules.find(rule => rule.pattern.test(clean)) ||
+    (theme === '工作' ? focusRules[4] : theme === '关系' ? focusRules[3] : focusRules[5]);
+}
 
 function randomIndex(max) {
   if (globalThis.crypto?.getRandomValues) {
@@ -96,12 +110,32 @@ export function createReading(theme, question, cards = drawThree(), spreadKey = 
   const spread = spreads[spreadKey] || spreads.three;
   if (cards.length !== spread.positions.length) throw new RangeError('Cards do not match spread');
   const safeTheme = themeLead[theme] ? theme : '自我成长';
-  const annotated = cards.map((card, i) => ({ ...card, position: spread.positions[i], meaning: explainCard(card, card.reversed, safeTheme), idea: cardMeaning(card).keywords[0] }));
+  const focus = questionFocus(question, safeTheme);
+  const positionVoices = {
+    '此刻的提示': idea => `今天可以把「${idea}」当作一个提醒。`,
+    '当前处境': idea => `目前最值得看见的，也许是「${idea}」。`,
+    '值得留意': idea => `接下来留意「${idea}」会怎样影响你的判断。`,
+    '可以尝试': idea => `下一步不妨从「${idea}」开始做一个小尝试。`,
+    '问题核心': idea => `问题的中心可能落在「${idea}」，先确认这是否符合你的真实经历。`,
+    '已有资源': idea => `你已经拥有的资源里，或许有一份「${idea}」可以使用。`,
+    '隐藏阻力': idea => `容易被忽略的阻力，可能与「${idea}」有关。`,
+    '新的视角': idea => `换个角度看，「${idea}」也许提供另一种解释。`,
+    '下一步行动': idea => `下一步可以围绕「${idea}」做一个可逆的小行动。`,
+  };
+  const annotated = cards.map((card, i) => {
+    const position = spread.positions[i];
+    const idea = cardMeaning(card).keywords[0];
+    const base = card.reversed ? cardMeaning(card).reversed : cardMeaning(card).upright;
+    const meaning = `${positionVoices[position]?.(idea) || `这张牌让你留意「${idea}」。`}${base}放回你关于${focus.name}的疑问里，可以先${focus.move}。`;
+    return { ...card, position, meaning, idea };
+  });
   const first = annotated[0];
   const last = annotated.at(-1);
   const bridge = annotated.slice(1, -1).map(card => `「${card.position}」带来${card.idea}`).join('，');
+  const intro = question ? `关于你提出的「${focus.name}」问题，` : `围绕「${focus.name}」这个主题，`;
   const summary = annotated.length === 1
-    ? `这张${first.zh}把今天的注意力带向「${first.idea}」。把它当作一个观察角度，而不是确定的答案；留意今天哪里出现了相关的线索。`
-    : `这次牌阵从「${first.position}」的${first.idea}开始，${bridge ? `${bridge}，` : ''}最后来到「${last.position}」的${last.idea}。这些线索可以帮助你整理思路，最终的选择仍由你作出。`;
-  return { theme: safeTheme, question: String(question || '').trim().slice(0, 120), spreadKey, spreadName: spread.name, cards: annotated, summary, reflection: cardMeaning(last).question };
+    ? `${intro}${first.zh}把注意力带向「${first.idea}」。这并不能替你确定结果，却可以作为一个提醒：${focus.lens}。先试着${focus.move}。`
+    : `${intro}「${first.position}」的${first.zh}提示${first.idea}，${bridge ? `${bridge}，` : ''}「${last.position}」的${last.zh}则把视线带向${last.idea}。把这些线索放回你自己的情境里：${focus.lens}。下一步可以先${focus.move}。`;
+  const reflection = `在这件关于${focus.name}的事里，如果先${focus.move}，你会从哪里开始？`;
+  return { theme: safeTheme, question: String(question || '').trim().slice(0, 120), focus: focus.name, spreadKey, spreadName: spread.name, cards: annotated, summary, reflection };
 }

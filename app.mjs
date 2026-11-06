@@ -25,11 +25,12 @@ function selectSpread(key) {
   saveActive(); show('setup');
 }
 function makeFace(card, className = 'tarot-face') {
-  const face = document.createElement('div'); face.className = `${className} ${card.suit || 'major'}`;
-  const top = document.createElement('span'); top.className = 'face-number'; top.textContent = card.arcana === 'major' ? String(card.rank).padStart(2, '0') : String(card.rank).padStart(2, '0');
-  const center = document.createElement('span'); center.className = 'face-glyph'; center.textContent = glyphs[card.suit || 'major'];
-  const bottom = document.createElement('span'); bottom.className = 'face-name'; bottom.textContent = card.zh;
-  face.append(top, center, bottom); return face;
+  const face = document.createElement('div'); face.className = `${className} ${card.suit || 'major'} ${card.reversed ? 'reversed' : ''}`;
+  const image = document.createElement('img'); image.src = card.image || deck.find(item => item.id === card.id)?.image || '';
+  image.alt = `${card.zh}牌面`; image.loading = 'lazy'; image.decoding = 'async';
+  const fallback = document.createElement('span'); fallback.className = 'face-fallback'; fallback.textContent = glyphs[card.suit || 'major']; fallback.hidden = true;
+  image.addEventListener('error', () => { image.hidden = true; fallback.hidden = false; });
+  face.append(image, fallback); return face;
 }
 function renderDraw() {
   const spread = spreads[state.spreadKey];
@@ -64,7 +65,7 @@ function finishReading() { const entry = saveReading(); renderResult(entry); }
 function renderResult(entry) {
   const reading = createReading(entry.theme, entry.question, entry.cards, entry.spreadKey);
   $('result-title').textContent = reading.spreadName;
-  $('result-question').textContent = reading.question ? `你想探索：${reading.question}` : `主题：${reading.theme}`;
+  $('result-question').textContent = reading.question ? `你想探索：${reading.question}｜解读焦点：${reading.focus}` : `主题：${reading.theme}｜解读焦点：${reading.focus}`;
   $('result-cards').replaceChildren();
   reading.cards.forEach((card, i) => {
     const article = document.createElement('article'); article.className = 'reading-card';
