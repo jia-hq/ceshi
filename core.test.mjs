@@ -76,3 +76,18 @@ test('逐张解读按牌位变化，避免重复同一种套话', () => {
   assert.ok(reading.cards[2].meaning.includes('下一步'));
   assert.equal(new Set(reading.cards.map(card => card.meaning)).size, 3);
 });
+
+test('情绪强烈时先给安顿提示，仍保留自主选择', () => {
+  const reading = createReading('工作', '我很焦虑，担心项目失败，不知道怎么办', drawThree());
+  assert.ok(reading.support.includes('焦虑'));
+  assert.ok(reading.support.includes('先'));
+  assert.ok(reading.action.includes('可以'));
+  assert.ok(reading.sources.length >= 2);
+});
+
+test('不能识别的具体问题会明确表示理解有限', () => {
+  const reading = createReading('自我成长', '蓝色窗帘究竟代表什么', drawThree());
+  assert.ok(reading.limitations.includes('没有完全理解'));
+  assert.ok(reading.summary.includes('不能可靠地把这个具体问题映射'));
+  assert.ok(!reading.action.includes('记录一个已经发生的细小变化'));
+});

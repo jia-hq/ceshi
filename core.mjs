@@ -1,4 +1,5 @@
 import deckData from './deck.mjs';
+import { understandQuestion } from './knowledge.mjs';
 
 export const deck = deckData;
 export const spreads = {
@@ -111,6 +112,7 @@ export function createReading(theme, question, cards = drawThree(), spreadKey = 
   if (cards.length !== spread.positions.length) throw new RangeError('Cards do not match spread');
   const safeTheme = themeLead[theme] ? theme : '自我成长';
   const focus = questionFocus(question, safeTheme);
+  const guidance = understandQuestion(question, safeTheme, focus);
   const positionVoices = {
     '此刻的提示': idea => `今天可以把「${idea}」当作一个提醒。`,
     '当前处境': idea => `目前最值得看见的，也许是「${idea}」。`,
@@ -126,16 +128,19 @@ export function createReading(theme, question, cards = drawThree(), spreadKey = 
     const position = spread.positions[i];
     const idea = cardMeaning(card).keywords[0];
     const base = card.reversed ? cardMeaning(card).reversed : cardMeaning(card).upright;
-    const meaning = `${positionVoices[position]?.(idea) || `这张牌让你留意「${idea}」。`}${base}放回你关于${focus.name}的疑问里，可以先${focus.move}。`;
+    const ending = guidance.unknown ? '如果这与你的问题没有关系，可以把它放下，只保留你认为有用的部分。' : `放回你关于${focus.name}的疑问里，可以先${focus.move}。`;
+    const meaning = `${positionVoices[position]?.(idea) || `这张牌让你留意「${idea}」。`}${base}${ending}`;
     return { ...card, position, meaning, idea };
   });
   const first = annotated[0];
   const last = annotated.at(-1);
   const bridge = annotated.slice(1, -1).map(card => `「${card.position}」带来${card.idea}`).join('，');
-  const intro = question ? `关于你提出的「${focus.name}」问题，` : `围绕「${focus.name}」这个主题，`;
-  const summary = annotated.length === 1
+  const intro = guidance.unknown ? '先只看牌面本身：' : question ? `关于你提出的「${focus.name}」问题，` : `围绕「${focus.name}」这个主题，`;
+  const summary = guidance.unknown
+    ? `我不能可靠地把这个具体问题映射到现有知识规则。${first.zh}带来「${first.idea}」的角度，${annotated.length > 1 ? `最后一张${last.zh}带来「${last.idea}」。` : ''}如果这些线索与你的经历无关，请不要勉强套用；你可以把问题说得更具体后再试。`
+    : annotated.length === 1
     ? `${intro}${first.zh}把注意力带向「${first.idea}」。这并不能替你确定结果，却可以作为一个提醒：${focus.lens}。先试着${focus.move}。`
     : `${intro}「${first.position}」的${first.zh}提示${first.idea}，${bridge ? `${bridge}，` : ''}「${last.position}」的${last.zh}则把视线带向${last.idea}。把这些线索放回你自己的情境里：${focus.lens}。下一步可以先${focus.move}。`;
   const reflection = `在这件关于${focus.name}的事里，如果先${focus.move}，你会从哪里开始？`;
-  return { theme: safeTheme, question: String(question || '').trim().slice(0, 120), focus: focus.name, spreadKey, spreadName: spread.name, cards: annotated, summary, reflection };
+  return { theme: safeTheme, question: String(question || '').trim().slice(0, 120), focus: focus.name, spreadKey, spreadName: spread.name, cards: annotated, summary, reflection, ...guidance };
 }

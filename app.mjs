@@ -78,6 +78,10 @@ function renderResult(entry) {
     details.append(label, title, english, meaning); article.append(face, details); $('result-cards').append(article);
   });
   $('summary').textContent = reading.summary; $('reflection').textContent = reading.reflection;
+  $('reading-support').textContent = reading.support;
+  $('reading-limitations').textContent = reading.limitations;
+  $('reading-limitations').hidden = !reading.limitations;
+  $('reading-action').textContent = reading.action;
   $('again').onclick = () => selectSpread(entry.spreadKey);
   $('copy').onclick = async () => {
     const text = `${reading.spreadName}｜${reading.cards.map(c => `${c.position}：${c.zh}${c.reversed ? '逆位' : '正位'}`).join('；')}。${reading.summary}`;
